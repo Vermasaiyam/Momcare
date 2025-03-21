@@ -45,3 +45,24 @@ export const uploadReport = async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 };
+
+export const getUserReports = async (req, res) => {
+    try {
+        const { userId } = req.query;
+
+        // console.log("user id: ", userId);
+        
+        // Populate the reports field with all details of the reports
+        const user = await User.findById(userId).populate({
+            path: "reports",
+            select: "image summary condition dos donts createdAt", // Select specific fields
+        });
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.status(200).json({ reports: user.reports });
+    } catch (error) {
+        console.error("Error fetching reports:", error);
+        res.status(500).json({ error: "Server error. Please try again later." });
+    }
+};
