@@ -1,13 +1,20 @@
 import cloudinary from "cloudinary";
 import Report from "../models/reportModel.js";
-import User from "../models/userModel.js"; // Import user model
+import User from "../models/userModel.js";
 
 export const uploadReport = async (req, res) => {
     try {
+        console.log("Received Request Body:", req.body);
+        console.log("Received File:", req.file);
+
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-        const userId = req.user.id; // Get userId from req.user (set in authUser middleware)
+        const { userId, summary, dos, donts, condition } = req.body;
         if (!userId) return res.status(400).json({ error: "User ID required" });
+
+        if (!summary || !dos || !donts || !condition) {
+            return res.status(400).json({ error: "Incomplete report details" });
+        }
 
         // Upload image to Cloudinary
         cloudinary.v2.uploader.upload_stream({ resource_type: "image" }, async (error, cloudinaryResponse) => {
@@ -16,7 +23,10 @@ export const uploadReport = async (req, res) => {
             // Save report in MongoDB
             const newReport = new Report({
                 image: cloudinaryResponse.secure_url,
-                summary: req.body.summary,
+                summary,
+                dos: JSON.parse(dos),
+                donts: JSON.parse(donts),
+                condition,
             });
 
             await newReport.save();

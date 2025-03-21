@@ -4,8 +4,10 @@ import { uploadReport } from "../controllers/reportController.js";
 import authUser from "../middleware/authUser.js";
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage() });
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
-router.post("/", authUser, upload.single("file"), uploadReport); // Apply auth middleware
+
+router.post("/upload", authUser, upload.single("file"), uploadReport);
 
 export default router;

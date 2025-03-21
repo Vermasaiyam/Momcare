@@ -55,90 +55,80 @@ def modify_text():
         if not transcription:
             return jsonify({'error': 'No transcription provided'}), 400
 
-        prompt = ("Analyze this medical report and provide a user-friendly summary. "
-                  "If the situation is serious, mention it clearly; otherwise, state it as normal. "
-                  "Provide do's and don'ts in simple language.\n" + transcription)
+        prompt = (
+            "Analyze this medical report and provide structured details strictly in JSON format:\n"
+            "```json\n"
+            "{\n"
+            "  \"summary\": \"<User-friendly summary of the condition>\",\n"
+            "  \"condition\": \"<Serious/Mild/Normal>\",\n"
+            "  \"dos\": [\"<Do's for the patient>\", \"...\"],\n"
+            "  \"donts\": [\"<Don'ts for the patient>\", \"...\"]\n"
+            "}\n"
+            "```\n"
+            f"\nMedical Report:\n{transcription}\n"
+            "Ensure the response is **ONLY** in JSON format, with no additional text."
+        )
 
-        # Try direct API call to Groq using requests
-        try:
-            headers = {
-                "Authorization": f"Bearer {groq_api_key}",
-                "Content-Type": "application/json"
-            }
-            
+        def fetch_summary(api_url, headers, model_name):
             payload = {
-                "model": "llama3-8b-8192",
+                "model": model_name,
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7,
-                "max_tokens": 1024,
+                "temperature": 0.3,  # Reduced for deterministic response
+                "max_tokens": 1500,  # Increased to avoid cut-off responses
                 "top_p": 1
             }
-            
-            response = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=headers,
-                json=payload
-            )
-            
-            print(f"Groq API Response Status: {response.status_code}")
-            print(f"Groq API Response: {response.text}")
-            
+
+            response = requests.post(api_url, headers=headers, json=payload)
+            print(f"API ({model_name}) Response Status: {response.status_code}")
+
             if response.status_code == 200:
                 response_json = response.json()
-                if 'choices' in response_json and len(response_json['choices']) > 0:
-                    if 'message' in response_json['choices'][0]:
-                        message = response_json['choices'][0]['message']
-                        if 'content' in message:
-                            modified_text = message['content']
-                            return jsonify({'summary': modified_text})
-            
-            # If we get here, something went wrong with Groq API
-            print("Failed to get valid response from Groq API")
-            
-            # Try OpenAI as fallback if key is available
-            if openai_api_key:
-                headers = {
-                    "Authorization": f"Bearer {openai_api_key}",
-                    "Content-Type": "application/json"
-                }
-                
-                payload = {
-                    "model": "gpt-3.5-turbo",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.7,
-                    "max_tokens": 1024,
-                    "top_p": 1
-                }
-                
-                response = requests.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers=headers,
-                    json=payload
-                )
-                
-                print(f"OpenAI API Response Status: {response.status_code}")
-                
-                if response.status_code == 200:
-                    response_json = response.json()
-                    if 'choices' in response_json and len(response_json['choices']) > 0:
-                        if 'message' in response_json['choices'][0]:
-                            message = response_json['choices'][0]['message']
-                            if 'content' in message:
-                                modified_text = message['content']
-                                return jsonify({'summary': modified_text})
-            
-            # If all else fails
-            return jsonify({'summary': "Could not generate summary from API."})
-            
-        except Exception as api_error:
-            print(f"API error: {api_error}")
-            return jsonify({'summary': f"API error: {str(api_error)}"})
+                if 'choices' in response_json and response_json['choices']:
+                    message = response_json['choices'][0].get('message', {})
+                    if 'content' in message:
+                        return message['content']
+            return None
+
+        headers = {
+            "Authorization": f"Bearer {groq_api_key}",
+            "Content-Type": "application/json"
+        }
+        summary_text = fetch_summary("https://api.groq.com/openai/v1/chat/completions", headers, "llama3-8b-8192")
+
+        print("Raw API response:", summary_text)
+
+        # If Groq fails, try OpenAI API as fallback
+        if not summary_text and openai_api_key:
+            headers["Authorization"] = f"Bearer {openai_api_key}"
+            summary_text = fetch_summary("https://api.openai.com/v1/chat/completions", headers, "gpt-3.5-turbo")
+
+        if summary_text:
+            try:
+                # Extract JSON output from the response using regex
+                import re
+                json_match = re.search(r'\{.*\}', summary_text, re.DOTALL)
+                if json_match:
+                    summary_text = json_match.group()
+
+                response_data = json.loads(summary_text)
+
+                return jsonify({
+                    'summary': response_data.get('summary', 'Summary not available'),
+                    'condition': response_data.get('condition', 'Unknown'),
+                    'dos': response_data.get('dos', []),
+                    'donts': response_data.get('donts', [])
+                })
+            except Exception as parse_error:
+                print(f"Error parsing API response: {parse_error}")
+                return jsonify({'error': 'Failed to parse API response. Please check format.'}), 500
+
+        return jsonify({'error': 'Could not generate summary from API.'}), 500
 
     except Exception as e:
-        print(f"Error occurred in modify_text: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Error in modify_text: {e}")
         return jsonify({'error': str(e)}), 500
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
