@@ -369,7 +369,51 @@ const addToCart = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: "Internal server error" });
     }
-}
+};
+
+const getCartItems = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({ error: "User ID is required" });
+        }
+
+        const user = await userModel.findById(userId).populate("cart");
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.status(200).json(user.cart);
+    } catch (error) {
+        console.error("Error fetching cart:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+
+// Remove an item from the cart
+const removeFromCart = async (req, res) => {
+    try {
+        const { userId, medicineId } = req.params;
+
+        if (!userId || !medicineId) {
+            return res.status(400).json({ error: "User ID and Medicine ID are required" });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        if (!user.cart.includes(medicineId)) {
+            return res.status(400).json({ error: "Medicine not found in cart" });
+        }
+
+        user.cart = user.cart.filter((id) => id.toString() !== medicineId);
+        await user.save();
+
+        res.status(200).json({ message: "Medicine removed from cart", cart: user.cart });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 
 export {
     loginUser,
@@ -384,4 +428,6 @@ export {
     paymentStripe,
     verifyStripe,
     addToCart,
+    getCartItems,
+    removeFromCart,
 }

@@ -7,7 +7,7 @@ import { AppContext } from "../context/AppContext";
 const Navbar = () => {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
-  const { token, setToken, userData, cartItems } = useContext(AppContext); // Assuming cartItems is an array
+  const { token, setToken, userData } = useContext(AppContext); // Assuming cartItems is an array
 
   const logout = () => {
     localStorage.removeItem("token");
@@ -48,9 +48,9 @@ const Navbar = () => {
         {/* Cart Icon with Badge */}
         <div className="relative cursor-pointer" onClick={() => navigate("/cart")}>
           <FaShoppingCart className="text-2xl hover:text-primary transition-all" />
-          {cartItems?.length > 0 && (
+          {userData?.cart?.length > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-              {cartItems.length}
+              {userData?.cart?.length}
             </span>
           )}
         </div>
