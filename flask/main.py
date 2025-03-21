@@ -239,6 +239,37 @@ def predict_gene():
     return jsonify({"predicted_trait": predicted_trait})
 
 
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    user_question = data.get("question")
+
+    if not user_question:
+        return jsonify({"error": "Missing question"}), 400
+
+    try:
+        headers = {
+            "Authorization": f"Bearer {groq_api_key}",
+            "Content-Type": "application/json",
+        }
+        payload = {
+            "model": "mixtral-8x7b-32768",
+            "messages": [{"role": "user", "content": user_question}],
+        }
+
+        response = requests.post(
+            "https://api.groq.com/v1/chat/completions",
+            json=payload,
+            headers=headers,
+        )
+
+        ai_response = response.json()["choices"][0]["message"]["content"]
+
+        return jsonify({"response": ai_response})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port, debug=True)

@@ -414,6 +414,25 @@ const removeFromCart = async (req, res) => {
     }
 };
 
+const saveChat = async (req, res) => {
+    const { user_id, userQuestion, aiResponse } = req.body;
+
+    if (!user_id || !userQuestion || !aiResponse) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+        await User.updateOne(
+            { _id: user_id },
+            { $push: { chat: { userQuestion, aiResponse } } }
+        );
+
+        res.json({ message: "Chat saved successfully" });
+    } catch (error) {
+        res.status(500).json({ error: "Database error" });
+    }
+};
+
 
 export {
     loginUser,
@@ -430,4 +449,5 @@ export {
     addToCart,
     getCartItems,
     removeFromCart,
+    saveChat,
 }

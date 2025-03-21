@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, registerUser, getProfile, updateProfile, bookAppointment, listAppointment, cancelAppointment, paymentRazorpay, verifyRazorpay, paymentStripe, verifyStripe, addToCart, getCartItems, removeFromCart } from '../controllers/userController.js';
+import { loginUser, registerUser, getProfile, updateProfile, bookAppointment, listAppointment, cancelAppointment, paymentRazorpay, verifyRazorpay, paymentStripe, verifyStripe, addToCart, getCartItems, removeFromCart, saveChat } from '../controllers/userController.js';
 import upload from '../middleware/multer.js';
 import authUser from '../middleware/authUser.js';
 const userRouter = express.Router();
@@ -19,5 +19,6 @@ userRouter.post("/verifyStripe", authUser, verifyStripe)
 userRouter.post("/add-to-cart", addToCart);
 userRouter.get("/cart/:userId", getCartItems);
 userRouter.delete("/cart/:userId/:medicineId", removeFromCart);
+userRouter.post("/save-chat", saveChat);
 
 export default userRouter;

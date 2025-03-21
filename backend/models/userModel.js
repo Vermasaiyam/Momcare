@@ -11,6 +11,12 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     reports: [{ type: mongoose.Schema.Types.ObjectId, ref: "Report" }],
     cart: [{ type: mongoose.Schema.Types.ObjectId, ref: "medicine" }],
+    chat: [
+        {
+            userQuestion: { type: String, required: true },
+            aiResponse: { type: String, required: true },
+        },
+    ],
 })
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);

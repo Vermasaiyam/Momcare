@@ -16,6 +16,7 @@ import Verify from './pages/Verify'
 import ReportsPage from './pages/Reports'
 import MedicinePage from './pages/Medicines'
 import CartPage from './pages/Cart'
+import Chatbot from './pages/Chatbot'
 
 const App = () => {
   return (
@@ -36,6 +37,7 @@ const App = () => {
         <Route path='/my-appointments' element={<MyAppointments />} />
         <Route path='/my-profile' element={<MyProfile />} />
         <Route path='/verify' element={<Verify />} />
+        <Route path='/chatbot' element={<Chatbot />} />
       </Routes>
       <Footer />
     </div>
