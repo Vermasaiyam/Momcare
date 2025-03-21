@@ -5,6 +5,7 @@ import TopDoctors from '../components/TopDoctors'
 import Banner from '../components/Banner'
 import UploadMedicalReport from '../components/MedicalReport'
 import NamePredictor from '../components/NamePredictor'
+import TraitPredictor from '../components/TraitPredictor'
 
 const Home = () => {
   return (
@@ -12,6 +13,7 @@ const Home = () => {
       <Header />
       <UploadMedicalReport />
       <NamePredictor />
+      <TraitPredictor />
       <SpecialityMenu />
       <TopDoctors />
       <Banner />

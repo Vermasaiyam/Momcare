@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 import requests
 import json
 import re
+import random
 
 app = Flask(__name__)
 CORS(app)
@@ -193,6 +194,49 @@ def name_predictor():
 
     baby_names = generate_baby_names_with_groq(father_name, mother_name)
     return jsonify(baby_names)
+
+trait_probabilities = {
+    "eye_color": {
+        ("Brown", "Brown"): ["Brown"] * 75 + ["Blue"] * 25,
+        ("Brown", "Blue"): ["Brown"] * 50 + ["Blue"] * 50,
+        ("Brown", "Green"): ["Brown"] * 50 + ["Green"] * 50,
+        ("Blue", "Blue"): ["Blue"],
+        ("Green", "Green"): ["Green"] * 75 + ["Blue"] * 25,
+        ("Blue", "Green"): ["Green"] * 50 + ["Blue"] * 50,
+    },
+    "hair_color": {
+        ("Black", "Black"): ["Black"] * 75 + ["Brown"] * 25,
+        ("Black", "Brown"): ["Black"] * 50 + ["Brown"] * 50,
+        ("Black", "Blonde"): ["Black"] * 50 + ["Brown"] * 25 + ["Blonde"] * 25,
+        ("Brown", "Brown"): ["Brown"] * 75 + ["Blonde"] * 25,
+        ("Brown", "Blonde"): ["Brown"] * 50 + ["Blonde"] * 50,
+        ("Blonde", "Blonde"): ["Blonde"],
+    },
+    "skin_tone": {
+        ("Light", "Light"): ["Light"] * 75 + ["Medium"] * 25,
+        ("Light", "Medium"): ["Light"] * 50 + ["Medium"] * 50,
+        ("Medium", "Medium"): ["Medium"] * 50 + ["Light"] * 25 + ["Dark"] * 25,
+        ("Medium", "Dark"): ["Medium"] * 50 + ["Dark"] * 50,
+        ("Dark", "Dark"): ["Dark"],
+    },
+}
+
+@app.route("/predict-gene", methods=["POST"])
+def predict_gene():
+    data = request.json
+    trait = data.get("trait")
+    father_trait = data.get("father_trait")
+    mother_trait = data.get("mother_trait")
+
+    if not trait or not father_trait or not mother_trait:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    key = tuple(sorted([father_trait, mother_trait]))  # Sorting ensures order consistency
+    possible_traits = trait_probabilities.get(trait, {}).get(key, [father_trait, mother_trait])
+
+    predicted_trait = random.choice(possible_traits)
+
+    return jsonify({"predicted_trait": predicted_trait})
 
 
 if __name__ == "__main__":
