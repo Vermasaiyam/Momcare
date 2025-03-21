@@ -7,6 +7,7 @@ import appointmentModel from "../models/appointmentModel.js";
 import { v2 as cloudinary } from 'cloudinary'
 import stripe from "stripe";
 import razorpay from 'razorpay';
+import medicineModel from "../models/medicineModel.js";
 
 // Gateway Initialize
 const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY)
@@ -343,6 +344,33 @@ const verifyStripe = async (req, res) => {
 
 }
 
+const addToCart = async (req, res) => {
+    try {
+        const { userId, medicineId } = req.body;
+
+        if (!userId || !medicineId) {
+            return res.status(400).json({ error: "User ID and Medicine ID are required" });
+        }
+
+        const user = await userModel.findById(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        const medicine = await medicineModel.findById(medicineId);
+        if (!medicine) return res.status(404).json({ error: "Medicine not found" });
+
+        if (user.cart.includes(medicineId)) {
+            return res.status(400).json({ error: "Medicine already in cart" });
+        }
+
+        user.cart.push(medicineId);
+        await user.save();
+
+        res.status(200).json({ message: "Medicine added to cart", cart: user.cart });
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
 export {
     loginUser,
     registerUser,
@@ -354,5 +382,6 @@ export {
     paymentRazorpay,
     verifyRazorpay,
     paymentStripe,
-    verifyStripe
+    verifyStripe,
+    addToCart,
 }

@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     dob: { type: String, default: 'Not Selected' },
     password: { type: String, required: true },
     reports: [{ type: mongoose.Schema.Types.ObjectId, ref: "Report" }],
+    cart: [{ type: mongoose.Schema.Types.ObjectId, ref: "Medicine" }],
 })
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);
