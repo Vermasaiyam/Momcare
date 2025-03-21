@@ -63,7 +63,7 @@ const UploadMedicalReport = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <div className="flex items-center justify-center min-h-[50vh] bg-gray-100">
             <div className="w-full max-w-lg bg-white shadow-xl rounded-xl p-6 border border-gray-200">
                 <h2 className="text-xl font-bold text-gray-800 text-center mb-4">
                     Upload & Scan Medical Report
