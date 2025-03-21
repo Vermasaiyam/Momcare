@@ -1,0 +1,10 @@
+whisper_env/
+
+venv/
+
+uploads/
+downloads/
+
+.env
+
+node_modules

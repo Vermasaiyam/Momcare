@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Report Transcription</title>
+    <link rel="stylesheet" href="../static/styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Medical Report Transcription</h1>
+
+        <!-- Upload Image File -->
+        <div class="section">
+            <h3>Upload Image File:</h3>
+            <input type="file" id="imageFile" accept="image/*">
+            <button class="btn" onclick="transcribeImage()">Transcribe</button>
+        </div>
+
+        <!-- Display transcription -->
+        <div class="section">
+            <h3>Extracted Text:</h3>
+            <textarea id="transcription" rows="5" cols="40" readonly></textarea>
+        </div>
+
+        <!-- Modify transcription -->
+        <div class="section">
+            <h3>Summarized Report:</h3>
+            <button class="btn" onclick="modifyText()">Generate Summary</button>
+        </div>
+
+        <!-- Display modified transcription -->
+        <div class="section">
+            <h3>Modified Text:</h3>
+            <textarea id="modifiedText" rows="5" cols="40" readonly></textarea>
+        </div>
+    </div>
+
+    <script src="../static/script.js"></script>
+
+    <script>
+        function transcribeImage() {
+            let fileInput = document.getElementById("imageFile");
+            let formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            fetch("/transcribe", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("transcription").value = data.transcription || "Error extracting text.";
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function modifyText() {
+            let transcription = document.getElementById("transcription").value;
+            if (!transcription) {
+                alert("Please transcribe an image first.");
+                return;
+            }
+
+            fetch("/modify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ transcription })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("modifiedText").value = data.summary || "Error generating summary.";
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+
+</html>
