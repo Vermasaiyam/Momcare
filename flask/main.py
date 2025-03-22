@@ -253,20 +253,34 @@ def chat():
             "Content-Type": "application/json",
         }
         payload = {
-            "model": "mixtral-8x7b-32768",
+            "model": "llama3-8b-8192",
             "messages": [{"role": "user", "content": user_question}],
         }
 
         response = requests.post(
-            "https://api.groq.com/v1/chat/completions",
+            "https://api.groq.com/openai/v1/chat/completions",
             json=payload,
             headers=headers,
         )
 
-        ai_response = response.json()["choices"][0]["message"]["content"]
+        response_json = response.json()
+        print("Groq API Response:", response_json)  # Debugging line
+
+        if response.status_code != 200:
+            return jsonify({"error": f"Groq API error: {response_json}"}), 500
+
+        ai_response = response_json.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+        if not ai_response:
+            return jsonify({"error": "Invalid response from Groq"}), 500
 
         return jsonify({"response": ai_response})
+
+    except requests.exceptions.RequestException as e:
+        print("Request error:", e)  # Log network issues
+        return jsonify({"error": "API request failed"}), 500
     except Exception as e:
+        print("Unexpected error:", e)  # Log unexpected errors
         return jsonify({"error": str(e)}), 500
 
 

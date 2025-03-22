@@ -7,33 +7,64 @@ const Chatbot = () => {
     const [input, setInput] = useState("");
     const messagesEndRef = useRef(null);
 
-    const { token, backendUrl, userData } = useContext(AppContext);
+    const { backendUrl, userData } = useContext(AppContext);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    // Fetch previous chat history and format correctly
+    useEffect(() => {
+        const fetchChatHistory = async () => {
+            try {
+                const user_id = userData?._id;
+                if (!user_id) return;
+
+                const res = await axios.get(`${backendUrl}/api/user/chat-history/${user_id}`);
+
+                if (res.data.chatHistory) {
+                    const formattedMessages = res.data.chatHistory.flatMap((chat) => [
+                        { role: "user", content: chat.userQuestion },
+                        { role: "assistant", content: chat.aiResponse },
+                    ]);
+
+                    setMessages(formattedMessages);
+                }
+            } catch (error) {
+                console.error("Error fetching chat history:", error);
+            }
+        };
+
+        fetchChatHistory();
+    }, [userData, backendUrl]);
+
     const handleSend = async () => {
         if (!input.trim()) return;
 
-        const user_id = userData._id; // Replace with actual user ID
+        const user_id = userData?._id;
         const userMessage = { role: "user", content: input };
 
         setMessages((prev) => [...prev, userMessage]);
 
         try {
+            console.log("Sending question to Flask:", input);
+
             // Send user query to Flask backend
-            const flaskRes = await axios.post("http://127.0.0.1:10000/chat", {
-                question: input,
-            });
+            const flaskRes = await axios.post("http://127.0.0.1:10000/chat", { question: input });
+
+            console.log("Flask response:", flaskRes.data);
+
+            if (!flaskRes.data.response) throw new Error("Invalid AI response");
 
             const aiResponse = flaskRes.data.response;
             const aiMessage = { role: "assistant", content: aiResponse };
 
             setMessages((prev) => [...prev, aiMessage]);
 
+            console.log("Saving chat history to Node.js API...");
+
             // Send chat history to Node.js API for saving
-            await axios.post("http://localhost:4000/api/user/save-chat", {
+            await axios.post(`${backendUrl}/api/user/save-chat`, {
                 user_id,
                 userQuestion: input,
                 aiResponse,
@@ -62,14 +93,13 @@ const Chatbot = () => {
                 {messages.map((msg, index) => (
                     <div
                         key={index}
-                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
-                            }`}
+                        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                     >
                         <div
                             className={`p-3 rounded-lg shadow-md max-w-xs ${msg.role === "user"
-                                    ? "bg-blue-500 text-white self-end"
-                                    : "bg-gray-300 text-black self-start"
-                                }`}
+                                ? "bg-blue-500 text-white self-end"
+                                : "bg-gray-300 text-black self-start"
+                            }`}
                         >
                             {msg.content}
                         </div>

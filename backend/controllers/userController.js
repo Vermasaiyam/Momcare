@@ -422,17 +422,41 @@ const saveChat = async (req, res) => {
     }
 
     try {
-        await User.updateOne(
+        const result = await userModel.updateOne(
             { _id: user_id },
             { $push: { chat: { userQuestion, aiResponse } } }
         );
 
+        if (result.modifiedCount === 0) {
+            console.error("No user found with this ID:", user_id);
+            return res.status(404).json({ error: "User not found" });
+        }
+
         res.json({ message: "Chat saved successfully" });
     } catch (error) {
-        res.status(500).json({ error: "Database error" });
+        console.error("Database error:", error);
+        res.status(500).json({ error: "Database error", details: error.message });
     }
 };
 
+const chatHistory = async (req, res) => {
+    try {
+        const { user_id } = req.params;
+
+
+        // Find user chat history
+        const user = await userModel.findById(user_id, "chat");
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        res.json({ chatHistory: user.chat });
+    } catch (error) {
+        console.error("Error fetching chat history:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
 
 export {
     loginUser,
@@ -450,4 +474,5 @@ export {
     getCartItems,
     removeFromCart,
     saveChat,
+    chatHistory,
 }
