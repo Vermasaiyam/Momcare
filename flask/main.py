@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_file
 import os
 import pytesseract
 from PIL import Image
@@ -281,6 +281,45 @@ def chat():
         return jsonify({"error": "API request failed"}), 500
     except Exception as e:
         print("Unexpected error:", e)  # Log unexpected errors
+        return jsonify({"error": str(e)}), 500
+
+
+music_directory = os.path.join(os.getcwd(), "static/music")
+os.makedirs(music_directory, exist_ok=True)
+
+def generate_ai_music(mood, song_type, language):
+    file_name = f"{mood}_{song_type}_{language}.mp3"
+    file_path = os.path.join(music_directory, file_name)
+
+    # Use default.mp3 if the requested file doesn't exist
+    default_file = os.path.join(music_directory, "default.mp3")
+    if not os.path.exists(file_path):
+        if os.path.exists(default_file):
+            return default_file
+        else:
+            raise FileNotFoundError("Error: default.mp3 is missing in static/music folder.")
+
+    return file_path
+
+@app.route('/generate-music', methods=['POST'])
+def generate_music():
+    try:
+        data = request.json
+        mood = data.get("mood")
+        song_type = data.get("songType")
+        language = data.get("language")
+
+        if not all([mood, song_type, language]):
+            return jsonify({"error": "Missing required parameters"}), 400
+
+        # Get the music file path
+        music_path = generate_ai_music(mood, song_type, language)
+
+        return send_file(music_path, mimetype="audio/mpeg", as_attachment=True)
+
+    except FileNotFoundError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 

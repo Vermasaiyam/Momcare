@@ -8,6 +8,7 @@ import UploadMedicalReport from "../components/MedicalReport";
 import NamePredictor from "../components/NamePredictor";
 import TraitPredictor from "../components/TraitPredictor";
 import Chatbot from "./Chatbot";
+import AIBasedMusicPlayer from "../components/AiMusicPlayer";
 
 const Home = () => {
   const [chatOpen, setChatOpen] = useState(false);
@@ -18,6 +19,7 @@ const Home = () => {
       <UploadMedicalReport />
       <NamePredictor />
       <TraitPredictor />
+      <AIBasedMusicPlayer />
       <SpecialityMenu />
       <TopDoctors />
       <Banner />
