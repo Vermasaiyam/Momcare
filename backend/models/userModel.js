@@ -17,6 +17,13 @@ const userSchema = new mongoose.Schema({
             aiResponse: { type: String, required: true },
         },
     ],
+    pregnancyDetails: {
+        isPregnant: { type: Boolean, default: false }, // If the user is pregnant
+        currentMonth: { type: Number, min: 1, max: 9, default: null }, // Current pregnancy month
+        age: { type: Number, default: null }, // Age of the user
+        expectedDeliveryDate: { type: String, default: null }, // Expected delivery date
+        complications: { type: String, default: "None" }, // Any pregnancy-related complications
+    },
 })
 
 const userModel = mongoose.models.user || mongoose.model("user", userSchema);

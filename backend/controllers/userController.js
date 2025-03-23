@@ -102,34 +102,46 @@ const getProfile = async (req, res) => {
 
 // API to update user profile
 const updateProfile = async (req, res) => {
-
     try {
-
-        const { userId, name, phone, address, dob, gender } = req.body
-        const imageFile = req.file
+        const { userId, name, phone, address, dob, gender, isPregnant, age, currentMonth, expectedDeliveryDate, complications } = req.body;
+        const imageFile = req.file;
 
         if (!name || !phone || !dob || !gender) {
-            return res.json({ success: false, message: "Data Missing" })
+            return res.status(400).json({ success: false, message: "Data Missing" });
         }
 
-        await userModel.findByIdAndUpdate(userId, { name, phone, address: JSON.parse(address), dob, gender })
+        // Ensure age and currentMonth are numbers or null
+        const parsedAge = age && !isNaN(age) ? parseInt(age) : null;
+        const parsedCurrentMonth = currentMonth && !isNaN(currentMonth) ? parseInt(currentMonth) : null;
+
+        const updateFields = {
+            name,
+            phone,
+            address: address ? JSON.parse(address) : {},
+            dob,
+            gender,
+            pregnancyDetails: {
+                isPregnant: isPregnant === 'true', // Convert to boolean
+                age: parsedAge,
+                currentMonth: parsedCurrentMonth,
+                expectedDeliveryDate: expectedDeliveryDate || null,
+                complications: complications || "None",
+            }
+        };
 
         if (imageFile) {
-
-            // upload image to cloudinary
-            const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: "image" })
-            const imageURL = imageUpload.secure_url
-
-            await userModel.findByIdAndUpdate(userId, { image: imageURL })
+            updateFields.image = imageFile.path;
         }
 
-        res.json({ success: true, message: 'Profile Updated' })
+        const updatedUser = await User.findByIdAndUpdate(userId, updateFields, { new: true });
 
+        res.json({ success: true, message: "Profile updated successfully", data: updatedUser });
     } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
+        console.error(error);
+        res.status(500).json({ success: false, message: "Internal Server Error" });
     }
-}
+};
+
 
 // API to book appointment 
 const bookAppointment = async (req, res) => {
